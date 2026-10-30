@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Coaching Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#F5F2EC;--card:#FFFFFF;--ink:#1F1D1A;--muted:#7A7369;--line:#E6E0D6;--accent:#8A7B66;--accent-ink:#F7F3EC;--soft:#EEE8DF;--ok:#4F7A5A;--warn:#A65D4A;--radius:14px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.4}
+body{padding-top:env(safe-area-inset-top);padding-bottom:calc(68px + env(safe-area-inset-bottom))}
+h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;margin:0;letter-spacing:.2px}
+h1{font-size:26px}h2{font-size:21px}h3{font-size:18px}
+header{position:sticky;top:0;z-index:5;background:rgba(245,242,236,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+header .sub{font-size:12px;color:var(--muted)}
+select,input,textarea,button{font:inherit;color:inherit}
+select.client{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 10px;max-width:46vw}
+main{padding:14px 14px 20px;max-width:720px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;align-items:center}
+.row.between{justify-content:space-between}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--accent-ink);border-color:var(--ink)}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--accent-ink);border-radius:10px;padding:11px 16px;font-weight:500;cursor:pointer;width:100%}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.small{width:auto;padding:7px 12px;font-size:13px}
+.btn.danger{background:transparent;color:var(--warn);border-color:var(--warn)}
+.btn:disabled{opacity:.5}
+.muted{color:var(--muted);font-size:13px}
+.ex{border-top:1px solid var(--line);padding:12px 0}
+.ex:first-of-type{border-top:0;padding-top:0}
+.ex .name{font-weight:600;cursor:pointer}
+.ex .target{font-size:12px;color:var(--muted)}
+.sets{display:grid;grid-template-columns:28px 1fr 1fr;gap:6px;margin-top:8px;align-items:center}
+.sets .lbl{font-size:12px;color:var(--muted);text-align:center}
+.sets input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 8px;text-align:center;background:#FBFAF7;font-size:16px}
+.sets input.done{background:#EEF3EC;border-color:#CFE0D2}
+input.txt,textarea.txt,select.txt{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;background:#FBFAF7;font-size:16px}
+textarea.txt{min-height:70px;resize:vertical}
+.prev{font-size:12px;color:var(--accent);margin-top:4px}
+.sticky{position:fixed;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom));padding:10px 14px;background:linear-gradient(transparent,var(--bg) 40%);z-index:4}
+.sticky .btn{max-width:692px;margin:0 auto;display:block;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;border:0;background:none;padding:9px 2px 7px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+nav button.on{color:var(--ink);font-weight:600}
+nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi div{background:var(--soft);border-radius:10px;padding:10px;text-align:center}
+.kpi b{display:block;font-size:20px;font-family:"Cormorant Garamond",serif}
+.kpi span{font-size:11px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-weight:500;font-size:12px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+label.f{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.scale{display:flex;gap:6px}
+.scale button{flex:1;border:1px solid var(--line);background:#FBFAF7;border-radius:9px;padding:10px 0;cursor:pointer;font-size:15px}
+.scale button.on{background:var(--ink);color:var(--accent-ink);border-color:var(--ink)}
+.modal{position:fixed;inset:0;background:rgba(31,29,26,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.modal .box{background:var(--card);border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:720px;max-height:88vh;overflow:auto}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(130px + env(safe-area-inset-bottom));background:var(--ink);color:var(--accent-ink);padding:9px 16px;border-radius:999px;font-size:13px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.photos .slot{aspect-ratio:3/4;background:var(--soft);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);position:relative;cursor:pointer}
+.photos img{width:100%;height:100%;object-fit:cover}
+.photos input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.wk{display:flex;align-items:center;gap:6px}
+.wk button{border:1px solid var(--line);background:var(--card);border-radius:8px;width:34px;height:34px;cursor:pointer}
+.ex-edit{display:grid;grid-template-columns:1fr 54px 80px 30px;gap:6px;align-items:center;margin-bottom:6px}
+.ex-edit input{border:1px solid var(--line);border-radius:8px;padding:8px;background:#FBFAF7;width:100%;font-size:14px}
+.ex-edit button{border:0;background:none;color:var(--warn);font-size:18px;cursor:pointer}
+canvas{max-width:100%}
+.banner{background:#FBF4E6;border:1px solid #EBD9B7;color:#6E5A2E;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1 id="title">Coaching</h1><div class="sub" id="subtitle">Laden...</div></div>
+  <select class="client" id="clientSel"></select>
+</header>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+<nav id="nav"></nav>
+
+<script>
+/* =========================================================
+   Clients live in this browser (name + Apps Script URL + token).
+   All data lives in each client's Google Sheet via the Apps Script API.
+   ========================================================= */
+const LS='coachtracker_clients_v2';
+const $=s=>document.querySelector(s);
+const isoLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const todayISO=()=>isoLocal(new Date());
+const addDays=(iso,n)=>{ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return isoLocal(d); };
+const fmtD=iso=>new Date(iso+'T00:00:00').toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+const DAYS=['Ma','Di','Wo','Do','Vr','Za','Zo'];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n=v=>{ if(v===''||v==null) return null; const f=parseFloat(String(v).replace(',','.')); return isNaN(f)?null:f; };
+const fmt=v=>v==null?'':String(Math.round(v*100)/100).replace('.',',');
+const r1=v=>Math.round(v*10)/10, r2=v=>Math.round(v*100)/100;
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+const S={ tab:'train', clients:[], ci:-1, client:null, meta:{}, program:[], cells:{}, days:{}, skin:{}, meas:{}, checkins:{}, workout:null, week:1, ciWeek:1, chart:null, loading:false, error:null };
+function loadClients(){ try{ S.clients=JSON.parse(localStorage.getItem(LS)||'[]'); S.ci=+localStorage.getItem(LS+'_i')||0; }catch(e){ S.clients=[]; } if(S.ci>=S.clients.length) S.ci=0; S.client=S.clients[S.ci]||null; }
+function saveClients(){ try{ localStorage.setItem(LS,JSON.stringify(S.clients)); localStorage.setItem(LS+'_i',String(S.ci)); }catch(e){} }
+
+/* ---------------- API ---------------- */
+async function api(action,payload){
+  const c=S.client; if(!c||!c.url) throw new Error('Geen API-URL ingesteld');
+  const body=JSON.stringify({token:c.token,action,...(payload||{})});
+  const res=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body,redirect:'follow'});
+  const txt=await res.text(); let j; try{ j=JSON.parse(txt); }catch(e){ throw new Error('Ongeldig antwoord van script (is het als "Anyone" gedeployed?)'); }
+  if(!j.ok) throw new Error(j.error||'API fout'); return j.data;
+}
+async function loadAll(){
+  S.loading=true; S.error=null; render();
+  try{
+    const d=await api('all');
+    S.meta=d.meta||{}; S.program=d.program||[]; S.days=d.days||{}; S.skin=d.skinfolds||{}; S.meas=d.measurements||{}; S.checkins=d.checkins||{};
+    if(!S.client.startDate && S.meta.startDate) S.client.startDate=S.meta.startDate;
+    if(!S.client.startDate){ S.client.startDate=guessStart(); saveClients(); }
+    S.cells={}; S.program.forEach(w=>w.exercises.forEach(ex=>{ Object.entries(ex.cells||{}).forEach(([wk,raw])=>{ (S.cells[w.id+'_w'+wk]=S.cells[w.id+'_w'+wk]||{})[ex.id]=parseCell(raw); }); }));
+    S.workout=S.program[0]?.id||null; S.week=Math.max(1,weekOf(todayISO())); S.ciWeek=S.week;
+  }catch(e){ S.error=e.message; }
+  S.loading=false; render();
+}
+/* if no start date yet: assume current sheet week = highest week with data, ending this week */
+function guessStart(){ let maxW=1; Object.values(S.days).forEach(d=>maxW=Math.max(maxW,d.week)); S.program.forEach(w=>w.exercises.forEach(ex=>Object.keys(ex.cells||{}).forEach(k=>maxW=Math.max(maxW,+k)))); const t=new Date(); const dow=(t.getDay()+6)%7; const mon=addDays(todayISO(),-dow); return addDays(mon,-(maxW-1)*7); }
+function weekOf(iso){ const st=S.client?.startDate||todayISO(); return Math.floor((new Date(iso+'T00:00:00')-new Date(st+'T00:00:00'))/864e5/7)+1; }
+function mondayOfWeek(w){ return addDays(S.client?.startDate||todayISO(),(w-1)*7); }
+async function guarded(fn,ok){ try{ await fn(); if(ok) toast(ok); }catch(e){ console.error(e); toast('Mislukt: '+e.message); } }
+
+/* ---------------- cell text <-> structured ---------------- */
+function parseCell(raw){
+  let s=String(raw||'').trim(); if(!s) return {sets:[],note:''};
+  let note=''; const nm=s.match(/^(.*?)\s*\(([^()]*)\)\s*$/); if(nm&&/kg|x|\d-\d|BW/i.test(nm[1])){ s=nm[1]; note=nm[2]; } else note='';
+  const out={sets:[],note:note||''}; const low=s.toLowerCase();
+  // "70kg x 3 / 60kg x 8"
+  if(s.includes('/')&&/kg/i.test(s)){ s.split('/').forEach(part=>{ const m=part.match(/(\d+(?:[.,]\d+)?)\s*kg\s*x\s*(\d{1,2})/i); if(m) out.sets.push({w:+m[1].replace(',','.'),r:+m[2]}); }); if(out.sets.length) return out; }
+  // "12 x 50 - 10 x 60" (reps x weight, no kg)
+  if(!low.includes('kg')){ const pairs=[...s.matchAll(/(\d{1,2})\s*x\s*(\d{2,3})/g)]; if(pairs.length){ out.sets=pairs.map(m=>({w:+m[2],r:+m[1]})); return out; } }
+  let w=null; const wm=s.match(/(\d+(?:[.,]\d+)?)\s*kg/i); if(wm) w=+wm[1].replace(',','.');
+  const runs=[...s.matchAll(/(?<![\d,.])(\d{1,2}(?:\s*-\s*\d{1,2})+)(?![\d,.])/g)];
+  let reps=[];
+  if(runs.length) reps=runs[runs.length-1][1].split(/\s*-\s*/).map(Number);
+  else { const rest=wm? s.slice(wm.index+wm[0].length):s; const m2=rest.match(/(?:x|-)\s*(\d{1,2})\b(?!\s*kg)/); if(m2) reps=[+m2[1]]; }
+  out.sets=reps.map(r=>({w,r}));
+  if(!out.note && !out.sets.length) out.note=raw; else if(!out.note && (nm===null) && /[a-z]{4,}/i.test(s.replace(/kg|bw|lr|kr/gi,''))) out.note=s;
+  return out;
+}
+function cellText(sets,note){
+  const cl=sets.filter(x=>x&&(x.w!=null||x.r!=null)); let t='';
+  if(cl.length){ const ws=[...new Set(cl.map(x=>x.w))]; const allBW=ws.length===1&&ws[0]==null;
+    if(allBW) t='BW: '+cl.map(x=>x.r??'-').join('-');
+    else if(ws.length===1) t=fmt(ws[0])+'kg x '+cl.map(x=>x.r??'-').join('-');
+    else t=cl.map(x=>(x.w!=null?fmt(x.w)+'kg':'BW')+' x '+(x.r??'-')).join(' / '); }
+  if(note) t=t?`${t} (${note})`:note; return t;
+}
+const setsStr=e=>{ if(!e) return ''; return cellText(e.sets||[],'')||e.note||''; };
+
+/* ---------------- Nav + render ---------------- */
+const TABS=[
+ ['train','Training','<svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/></svg>'],
+ ['weight','Gewicht','<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 5-8 4 5"/></svg>'],
+ ['checkin','Check-in','<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-5M4 5h16v14H4z"/></svg>'],
+ ['measure','Metingen','<svg viewBox="0 0 24 24"><path d="M3 7h18v10H3zM7 7v4M11 7v3M15 7v4M19 7v3"/></svg>'],
+ ['more','Meer','<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>']
+];
+function renderNav(){ $('#nav').innerHTML=TABS.map(([k,l,i])=>`<button class="${S.tab===k?'on':''}" data-tab="${k}">${i}${l}</button>`).join(''); $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{ S.tab=b.dataset.tab; render(); }); }
+function renderClientSel(){ const sel=$('#clientSel'); sel.innerHTML=S.clients.map((c,i)=>`<option value="${i}" ${i===S.ci?'selected':''}>${esc(c.name)}</option>`).join('')+'<option value="__new">+ Client</option>'; sel.onchange=()=>{ if(sel.value==='__new'){ renderClientSel(); openClientForm(-1); return; } S.ci=+sel.value; S.client=S.clients[S.ci]; saveClients(); loadAll(); }; }
+function render(){
+  renderNav(); renderClientSel(); if(S.chart){ S.chart.destroy(); S.chart=null; }
+  const m=$('#main');
+  $('#title').textContent=S.client?.name||'Coaching'; $('#subtitle').textContent=S.loading?'Sheet laden...':(S.error?'Fout':(S.client?'Live uit Google Sheet':'Geen client'));
+  if(!S.client){ m.innerHTML=`<div class="card"><h2>Welkom</h2><p class="muted">Voeg je eerste client toe: naam, de URL van je Apps Script en je token.</p><button class="btn" id="mk">Client toevoegen</button></div>`; $('#mk').onclick=()=>openClientForm(-1); return; }
+  if(S.loading){ m.innerHTML=`<div class="card"><p class="muted">Sheet laden...</p></div>`; return; }
+  if(S.error){ m.innerHTML=`<div class="card"><h2>Kan sheet niet laden</h2><p class="muted">${esc(S.error)}</p><div class="row" style="margin-top:10px"><button class="btn ghost" id="retry">Opnieuw</button><button class="btn" id="edit">Instellingen</button></div></div>`; $('#retry').onclick=loadAll; $('#edit').onclick=()=>openClientForm(S.ci); return; }
+  m.innerHTML=({train:viewTrain,weight:viewWeight,checkin:viewCheckin,measure:viewMeasure,more:viewMore})[S.tab]();
+  ({train:bindTrain,weight:bindWeight,checkin:bindCheckin,measure:bindMeasure,more:bindMore})[S.tab]();
+}
+function weekNav(cur){ return `<div class="wk"><button data-wk="-1">‹</button><div><b>Week ${cur}</b><div class="muted">${fmtD(mondayOfWeek(cur))} t/m ${fmtD(addDays(mondayOfWeek(cur),6))}</div></div><button data-wk="1">›</button></div>`; }
+
+/* ---------------- Training ---------------- */
+function logKey(w,wk){ return `${w}_w${wk}`; }
+function prevEntry(exId,wid,week){ for(let k=week-1;k>=1;k--){ const e=S.cells[logKey(wid,k)]?.[exId]; if(e&&(e.sets.length||e.note)) return {week:k,e}; } return null; }
+function viewTrain(){
+  if(!S.program.length) return `<div class="card"><h2>Geen programma gevonden</h2><p class="muted">Het script vond geen oefeningen op tabblad "Training". Check de tabnaam in Code.gs.</p></div>`;
+  if(!S.program.find(w=>w.id===S.workout)) S.workout=S.program[0].id;
+  const w=S.program.find(x=>x.id===S.workout); const log=S.cells[logKey(w.id,S.week)]||{};
+  let h=`<div class="chips">${S.program.map(x=>`<div class="chip ${x.id===S.workout?'on':''}" data-w="${x.id}">${esc(x.name)}</div>`).join('')}</div><div class="card">${weekNav(S.week)}</div><div class="card">`;
+  w.exercises.forEach((ex,i)=>{
+    const e=log[ex.id]||{sets:[],note:''}; const prev=prevEntry(ex.id,w.id,S.week);
+    const planned=e.sets.length===0&&e.note&&/kg\s*x?\s*$/i.test(e.note);   // coach pre-filled target like "40kg x"
+    h+=`<div class="ex" data-ex="${ex.id}" data-row="${ex.row}"><div class="name" data-chart="${ex.id}">${i+1}. ${esc(ex.name)} <span class="muted">›</span></div><div class="target">${ex.sets} sets × ${esc(ex.reps)} reps${ex.equipment?' · '+esc(ex.equipment):''}</div>
+    ${prev?`<div class="prev">Week ${prev.week}: ${esc(setsStr(prev.e))}${prev.e.note&&prev.e.sets.length?' · '+esc(prev.e.note):''}</div>`:''}
+    ${planned?`<div class="prev" style="color:var(--ok)">Doel coach: ${esc(e.note)}</div>`:''}
+    <div class="sets"><div></div><div class="lbl">kg</div><div class="lbl">reps</div>`;
+    const nSets=Math.max(ex.sets,e.sets.length);
+    for(let s=0;s<nSets;s++){ const st=e.sets[s]||{}; const pw=prev?.e?.sets?.[s]?.w??(planned?n(e.note):null); h+=`<div class="lbl">${s+1}</div><input inputmode="decimal" placeholder="${pw!=null?fmt(pw):''}" value="${st.w!=null?fmt(st.w):''}" data-s="${s}" data-k="w" class="${st.w!=null?'done':''}"><input inputmode="numeric" placeholder="${prev?.e?.sets?.[s]?.r??''}" value="${st.r??''}" data-s="${s}" data-k="r" class="${st.r!=null?'done':''}">`; }
+    h+=`</div><input class="txt" style="margin-top:6px;font-size:13px;padding:7px" placeholder="Notitie (vervanging, bezet, gevoel)" value="${esc(planned?'':e.note||'')}" data-note="1"></div>`;
+  });
+  h+=`</div><div style="height:60px"></div><div class="sticky"><button class="btn" id="saveLog">Opslaan in sheet</button></div>`;
+  return h;
+}
+function bindTrain(){
+  document.querySelectorAll('[data-w]').forEach(c=>c.onclick=()=>{ S.workout=c.dataset.w; render(); });
+  document.querySelectorAll('[data-wk]').forEach(b=>b.onclick=()=>{ S.week=Math.max(1,S.week+ +b.dataset.wk); render(); });
+  document.querySelectorAll('[data-chart]').forEach(x=>x.onclick=()=>openChart(x.dataset.chart));
+  const save=$('#saveLog'); if(!save) return;
+  save.onclick=()=>guarded(async()=>{
+    const w=S.program.find(x=>x.id===S.workout); const cells={}; const key=logKey(w.id,S.week); const cur=S.cells[key]||{}; const next={...cur};
+    document.querySelectorAll('.ex[data-ex]').forEach(el=>{
+      const sets=[]; el.querySelectorAll('input[data-s]').forEach(inp=>{ const i=+inp.dataset.s; sets[i]=sets[i]||{w:null,r:null}; sets[i][inp.dataset.k]=n(inp.value); });
+      const note=el.querySelector('[data-note]').value.trim(); const clean=sets.filter(s=>s&&(s.w!=null||s.r!=null));
+      const text=cellText(clean,note); const old=cur[el.dataset.ex]; const oldText=old?cellText(old.sets,old.note):'';
+      if(text!==oldText && (text||old)){ cells[el.dataset.row]=text; next[el.dataset.ex]={sets:clean,note}; }
+    });
+    if(!Object.keys(cells).length) return toast('Niets gewijzigd');
+    save.disabled=true; save.textContent='Opslaan...';
+    try{ await api('saveLog',{week:S.week,cells}); S.cells[key]=next; } finally{ save.disabled=false; save.textContent='Opslaan in sheet'; }
+    render();
+  },'Opgeslagen in sheet');
+}
+function openChart(exId){
+  const w=S.program.find(x=>x.id===S.workout); const ex=w.exercises.find(e=>e.id===exId); if(!ex) return;
+  const pts=[]; Object.keys(ex.cells||{}).map(Number).sort((a,b)=>a-b).forEach(wk=>{ const e=S.cells[logKey(w.id,wk)]?.[exId]; const sets=(e?.sets||[]).filter(s=>s.w!=null&&s.r!=null); if(!sets.length) return;
+    pts.push({week:wk,top:Math.max(...sets.map(s=>s.w)),vol:sets.reduce((a,s)=>a+s.w*s.r,0),e1:Math.max(...sets.map(s=>s.w*(1+s.r/30)))}); });
+  openModal(`<div class="row between"><h2>${esc(ex.name)}</h2><button class="btn small ghost" id="closeM">Sluiten</button></div>
+   ${pts.length?`<div class="kpi" style="margin:10px 0"><div><b>${fmt(pts.at(-1).top)}</b><span>top set kg</span></div><div><b>${Math.round(pts.at(-1).e1)}</b><span>geschat 1RM</span></div><div><b>${pts.length>1?(pts.at(-1).top>=pts[0].top?'+':'')+fmt(pts.at(-1).top-pts[0].top):'–'}</b><span>kg sinds start</span></div></div><canvas id="exChart" height="200"></canvas>`:'<p class="muted">Nog geen gewichten gelogd.</p>'}
+   <table style="margin-top:10px"><tr><th>Week</th><th class="num">Top kg</th><th class="num">Volume</th><th class="num">e1RM</th></tr>${pts.slice().reverse().map(p=>`<tr><td>${p.week}</td><td class="num">${fmt(p.top)}</td><td class="num">${Math.round(p.vol)}</td><td class="num">${Math.round(p.e1)}</td></tr>`).join('')}</table>`);
+  $('#closeM').onclick=closeModal;
+  if(pts.length&&window.Chart) S.chart=new Chart($('#exChart'),{type:'line',data:{labels:pts.map(p=>'W'+p.week),datasets:[{label:'Top set (kg)',data:pts.map(p=>p.top),borderColor:'#1F1D1A',backgroundColor:'#1F1D1A',tension:.25},{label:'Geschat 1RM',data:pts.map(p=>Math.round(p.e1)),borderColor:'#8A7B66',borderDash:[4,4],tension:.25}]},options:{plugins:{legend:{labels:{boxWidth:10}}},scales:{y:{grid:{color:'#EEE8DF'}},x:{grid:{display:false}}}}});
+}
+
+/* ---------------- Gewicht ---------------- */
+const dayKey=(w,d)=>`${w}_${d}`;
+function dayOf(iso){ const w=weekOf(iso); const d=(new Date(iso+'T00:00:00').getDay()+6)%7; return {w,d}; }
+function weekAvg(w,f='kg'){ const v=[]; for(let d=0;d<7;d++){ const x=S.days[dayKey(w,d)]?.[f]; if(x!=null) v.push(x); } return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; }
+function maxWeek(){ let m=1; Object.values(S.days).forEach(d=>m=Math.max(m,d.week)); return Math.max(m,weekOf(todayISO())); }
+function viewWeight(){
+  const t=todayISO(); const {w:tw,d:td}=dayOf(t); const today=S.days[dayKey(tw,td)]||{}; const wk=S.week; const avg=weekAvg(wk),prev=weekAvg(wk-1),sl=weekAvg(wk,'sleep');
+  return `<div class="card"><h2>Vandaag · ${fmtD(t)}</h2><p class="muted" style="margin:4px 0 10px">Na het opstaan en toilet wegen. Slaap naar beneden afronden.</p>
+   <div class="grid2"><div><label class="f">Gewicht (kg)</label><input class="txt" inputmode="decimal" id="wKg" value="${today.kg!=null?fmt(today.kg):''}" placeholder="74,2"></div><div><label class="f">Slaap (uur)</label><input class="txt" inputmode="decimal" id="wSleep" value="${today.sleep!=null?fmt(today.sleep):''}" placeholder="7,5"></div></div>
+   <button class="btn" id="saveDay" style="margin-top:10px">Opslaan in sheet</button></div>
+  <div class="card">${weekNav(wk)}<div class="kpi" style="margin-top:10px"><div><b>${avg?fmt(r2(avg)):'–'}</b><span>weekgem. kg</span></div><div><b>${avg&&prev?(avg-prev>=0?'+':'')+fmt(r2(avg-prev)):'–'}</b><span>vs vorige week</span></div><div><b>${sl?fmt(r1(sl)):'–'}</b><span>gem. slaap</span></div></div>
+   <table style="margin-top:10px"><tr><th>Dag</th><th class="num">kg</th><th class="num">slaap</th></tr>${[0,1,2,3,4,5,6].map(d=>{ const x=S.days[dayKey(wk,d)]||{}; return `<tr><td>${DAYS[d]} <span class="muted">${fmtD(addDays(mondayOfWeek(wk),d))}</span></td><td class="num"><input inputmode="decimal" data-d="${d}" data-k="kg" value="${x.kg!=null?fmt(x.kg):''}" style="width:64px;text-align:right;border:1px solid var(--line);border-radius:7px;padding:5px;background:#FBFAF7"></td><td class="num"><input inputmode="decimal" data-d="${d}" data-k="sleep" value="${x.sleep!=null?fmt(x.sleep):''}" style="width:56px;text-align:right;border:1px solid var(--line);border-radius:7px;padding:5px;background:#FBFAF7"></td></tr>`; }).join('')}</table>
+   <button class="btn ghost" id="saveWeek" style="margin-top:10px">Week opslaan</button></div>
+  <div class="card"><h3>Trend</h3><canvas id="wChart" height="220"></canvas></div>
+  <div class="card"><h3>Weekgemiddelden</h3><table><tr><th>Week</th><th class="num">kg</th><th class="num">Δ</th><th class="num">slaap</th></tr>${weekRows()}</table></div>`;
+}
+function weekRows(){ const rows=[]; let prev=null; for(let w=1;w<=maxWeek();w++){ const a=weekAvg(w); rows.push([w,a,prev!=null&&a!=null?a-prev:null,weekAvg(w,'sleep')]); if(a!=null) prev=a; } return rows.reverse().filter(r=>r[1]!=null).map(([w,a,d,s])=>`<tr><td>Week ${w}</td><td class="num">${fmt(r2(a))}</td><td class="num" style="color:${d==null?'inherit':d>0?'var(--warn)':'var(--ok)'}">${d==null?'':(d>=0?'+':'')+fmt(r2(d))}</td><td class="num">${s!=null?fmt(r1(s)):''}</td></tr>`).join(''); }
+function bindWeight(){
+  document.querySelectorAll('[data-wk]').forEach(b=>b.onclick=()=>{ S.week=Math.max(1,S.week+ +b.dataset.wk); render(); });
+  $('#saveDay').onclick=()=>guarded(async()=>{ const {w,d}=dayOf(todayISO()); const rec={week:w,day:d,kg:n($('#wKg').value),sleep:n($('#wSleep').value)}; await api('saveDays',{days:[rec]}); S.days[dayKey(w,d)]=rec; render(); },'Opgeslagen in sheet');
+  $('#saveWeek').onclick=()=>guarded(async()=>{ const days=[]; for(let d=0;d<7;d++){ const kg=n(document.querySelector(`input[data-d="${d}"][data-k="kg"]`).value), sleep=n(document.querySelector(`input[data-d="${d}"][data-k="sleep"]`).value); const old=S.days[dayKey(S.week,d)]||{}; if((old.kg??null)!==kg||(old.sleep??null)!==sleep) days.push({week:S.week,day:d,kg,sleep}); }
+    if(!days.length) return toast('Niets gewijzigd'); await api('saveDays',{days}); days.forEach(r=>{ if(r.kg==null&&r.sleep==null) delete S.days[dayKey(r.week,r.day)]; else S.days[dayKey(r.week,r.day)]=r; }); render(); },'Week opgeslagen');
+  const pts=Object.values(S.days).filter(d=>d.kg!=null).sort((a,b)=>a.week-b.week||a.day-b.day);
+  if(pts.length&&window.Chart){ const kg=pts.map(p=>p.kg); const ma=kg.map((_,i)=>{ const s=kg.slice(Math.max(0,i-6),i+1); return s.reduce((a,b)=>a+b,0)/s.length; });
+    S.chart=new Chart($('#wChart'),{type:'line',data:{labels:pts.map(p=>fmtD(addDays(mondayOfWeek(p.week),p.day))),datasets:[{label:'Dagelijks',data:kg,borderColor:'#C9BFB0',pointRadius:2,borderWidth:1.5},{label:'7-daags gem.',data:ma,borderColor:'#1F1D1A',pointRadius:0,tension:.3,borderWidth:2}]},options:{plugins:{legend:{labels:{boxWidth:10}}},scales:{y:{grid:{color:'#EEE8DF'}},x:{grid:{display:false},ticks:{maxTicksLimit:6}}}}}); }
+}
+
+/* ---------------- Check-in ---------------- */
+const CI_Q=[['feel','Hoe voelde je jezelf afgelopen week?'],['energy','Beoordeel je energielevel'],['stress','Beoordeel je stressniveau (5 = weinig stress)'],['hunger','Beoordeel je hongergevoel (5 = weinig honger)'],['training','Beoordeel je trainingen']];
+function viewCheckin(){
+  const wk=S.ciWeek; const c=S.checkins['w'+wk]||{}; const avg=weekAvg(wk); const trained=Object.keys(S.cells).filter(k=>k.endsWith('_w'+wk)&&Object.values(S.cells[k]).some(e=>e.sets.length)).length;
+  let h=`<div class="card">${weekNav(wk)}<p class="muted" style="margin:6px 0 0">Weekgemiddelde: <b>${avg?fmt(r2(avg))+' kg':'–'}</b> · Trainingen gelogd: <b>${trained}</b></p></div><div class="card">`;
+  CI_Q.forEach(([k,q])=>{ h+=`<label class="f" style="font-size:14px;color:var(--ink);margin-top:10px">${q}</label><div class="scale" data-q="${k}">${[1,2,3,4,5].map(v=>`<button class="${c[k]===v?'on':''}" data-v="${v}">${v}</button>`).join('')}</div>`; });
+  h+=`<label class="f" style="margin-top:12px">Opmerkingen of feedback</label><textarea class="txt" id="ciNote">${esc(c.note||'')}</textarea><button class="btn" id="saveCi" style="margin-top:10px">Opslaan in sheet</button><p class="muted" style="margin:8px 0 0">Schrijft naar tabblad "Wekelijkse checking" (wat je coach ziet) en bewaart de historie in "App log".</p></div>`;
+  const hist=Object.values(S.checkins).sort((a,b)=>b.week-a.week);
+  if(hist.length) h+=`<div class="card"><h3>Historie</h3><table><tr><th>Wk</th>${CI_Q.map(([k])=>`<th class="num">${k.slice(0,3)}</th>`).join('')}</tr>${hist.map(x=>`<tr><td>${x.week}</td>${CI_Q.map(([k])=>`<td class="num">${x[k]??''}</td>`).join('')}</tr>${x.note?`<tr><td colspan="6" class="muted" style="font-size:12px">${esc(x.note)}</td></tr>`:''}`).join('')}</table></div>`;
+  return h;
+}
+function bindCheckin(){
+  document.querySelectorAll('[data-wk]').forEach(b=>b.onclick=()=>{ S.ciWeek=Math.max(1,S.ciWeek+ +b.dataset.wk); render(); });
+  document.querySelectorAll('.scale').forEach(sc=>sc.querySelectorAll('button').forEach(b=>b.onclick=()=>{ sc.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }));
+  $('#saveCi').onclick=()=>guarded(async()=>{ const doc={week:S.ciWeek,date:todayISO(),note:$('#ciNote').value.trim()}; document.querySelectorAll('.scale').forEach(sc=>{ const on=sc.querySelector('.on'); doc[sc.dataset.q]=on?+on.dataset.v:null; }); await api('saveCheckin',doc); S.checkins['w'+S.ciWeek]=doc; render(); },'Opgeslagen in sheet');
+}
+
+/* ---------------- Metingen ---------------- */
+const CIRC=[['chest','Borst'],['waist','Buik (navel)'],['armR','Arm rechts'],['armL','Arm links'],['legR','Been rechts'],['legL','Been links']];
+const SKIN=[['sChest','Borst'],['sAxilla','Oksel'],['sTricep','Tricep'],['sBack','Rug'],['sAbd','Buik'],['sHip','Heup'],['sQuad','Quad']];
+function viewMeasure(){
+  const t=todayISO(); const wk=weekOf(t); const m=S.meas['w'+wk]||{}; const sk=S.skin[t]||{};
+  const mh=Object.values(S.meas).sort((a,b)=>b.week-a.week); const sh=Object.keys(S.skin).sort().reverse();
+  return `<div class="card"><h2>Omtrekken (cm)</h2><p class="muted" style="margin:4px 0 8px">Gaat naar "Lichaam metingen", kolom van de huidige week.</p><div class="row"><label class="f" style="margin:0">Week</label><input class="txt" inputmode="numeric" id="mWeek" value="${wk}" style="width:80px"></div>
+   <div class="grid3" style="margin-top:8px">${CIRC.map(([k,l])=>`<div><label class="f">${l}</label><input class="txt" inputmode="decimal" data-m="${k}" value="${m[k]!=null?fmt(m[k]):''}"></div>`).join('')}</div>
+   <div class="grid2" style="margin-top:8px"><div><label class="f">Stappen/dag gem.</label><input class="txt" inputmode="numeric" data-m="steps" value="${m.steps!=null?fmt(m.steps):''}"></div></div>
+   <button class="btn" id="saveM" style="margin-top:10px">Omtrekken opslaan</button></div>
+  <div class="card"><h2>Huidplooien (mm)</h2><p class="muted" style="margin:4px 0 8px">Gaat naar de huidplooitabel op "Dagelijkse weging".</p><input type="date" class="txt" id="sDate" value="${t}">
+   <div class="grid3" style="margin-top:8px">${SKIN.map(([k,l])=>`<div><label class="f">${l}</label><input class="txt" inputmode="decimal" data-s="${k}" value="${sk[k]!=null?fmt(sk[k]):''}"></div>`).join('')}<div><label class="f">Vet %</label><input class="txt" inputmode="decimal" data-s="fat" value="${sk.fat!=null?fmt(sk.fat):''}"></div></div>
+   <button class="btn" id="saveS" style="margin-top:10px">Huidplooien opslaan</button></div>
+  ${mh.length?`<div class="card"><h3>Omtrekken historie</h3><div style="overflow:auto"><table><tr><th>Wk</th>${CIRC.map(([k,l])=>`<th class="num">${l.split(' ')[0]}</th>`).join('')}</tr>${mh.map(x=>`<tr><td>${x.week}</td>${CIRC.map(([k])=>`<td class="num">${fmt(x[k])}</td>`).join('')}</tr>`).join('')}</table></div></div>`:''}
+  ${sh.length?`<div class="card"><h3>Huidplooien historie</h3><div style="overflow:auto"><table><tr><th>Datum</th>${SKIN.map(([k,l])=>`<th class="num">${l.slice(0,4)}</th>`).join('')}<th class="num">Σ</th><th class="num">vet%</th></tr>${sh.map(d=>{ const x=S.skin[d]; const sum=SKIN.map(([k])=>x[k]).filter(v=>v!=null).reduce((a,b)=>a+b,0); return `<tr><td>${fmtD(d)}</td>${SKIN.map(([k])=>`<td class="num">${fmt(x[k])}</td>`).join('')}<td class="num">${sum||''}</td><td class="num">${fmt(x.fat)}</td></tr>`; }).join('')}</table></div></div>`:''}`;
+}
+function bindMeasure(){
+  $('#saveM').onclick=()=>guarded(async()=>{ const doc={week:+$('#mWeek').value||weekOf(todayISO())}; document.querySelectorAll('[data-m]').forEach(i=>doc[i.dataset.m]=n(i.value)); await api('saveMeasurement',doc); S.meas['w'+doc.week]={...(S.meas['w'+doc.week]||{}),...doc}; render(); },'Opgeslagen in sheet');
+  $('#saveS').onclick=()=>guarded(async()=>{ const doc={date:$('#sDate').value||todayISO()}; document.querySelectorAll('[data-s]').forEach(i=>doc[i.dataset.s]=n(i.value)); await api('saveSkinfold',doc); S.skin[doc.date]={...(S.skin[doc.date]||{}),...doc}; render(); },'Opgeslagen in sheet');
+}
+
+/* ---------------- Meer ---------------- */
+function viewMore(){
+  const c=S.client;
+  return `<div class="card"><h2>Client</h2><table style="margin-top:6px"><tr><td>Naam</td><td>${esc(c.name)}</td></tr><tr><td>Sheet zegt</td><td>${esc(S.meta.name||'')} ${S.meta.age?'· '+S.meta.age+' jr':''} ${S.meta.height?'· '+S.meta.height+' cm':''}</td></tr><tr><td>Week 1 start</td><td>${c.startDate?fmtD(c.startDate)+' ('+c.startDate+')':'–'}</td></tr><tr><td>Huidige week</td><td>${weekOf(todayISO())}</td></tr></table>
+   <div class="row" style="margin-top:10px"><button class="btn ghost" id="editC">Instellingen</button><button class="btn ghost" id="reload">Sheet herladen</button></div></div>
+  <div class="card"><h3>Hoe het werkt</h3><p class="muted" style="margin:4px 0 0">Alles wat je hier invult wordt direct in je Google Sheet geschreven, in dezelfde cellen en hetzelfde formaat als je coach gewend is ("45kg x 12-12-12"). De sheet blijft de bron; de app leest hem bij openen.</p></div>
+  <div class="card"><h3>Nieuwe client (bijv. je vriend)</h3><p class="muted" style="margin:4px 0 8px">Hij deployt het Apps Script op zijn eigen sheet en voert hier zijn URL + token in. Dit staat alleen op dit apparaat; op zijn telefoon voert hij hetzelfde in.</p><button class="btn ghost" id="addC">+ Client toevoegen</button></div>`;
+}
+function bindMore(){ $('#editC').onclick=()=>openClientForm(S.ci); $('#reload').onclick=loadAll; $('#addC').onclick=()=>openClientForm(-1); }
+function openClientForm(i){
+  const c=i>=0?S.clients[i]:{name:'',url:'',token:'',startDate:''};
+  openModal(`<h2>${i>=0?'Client bewerken':'Nieuwe client'}</h2>
+   <label class="f" style="margin-top:8px">Naam</label><input class="txt" id="fName" value="${esc(c.name)}" placeholder="Nick">
+   <label class="f" style="margin-top:8px">Apps Script web-app URL</label><input class="txt" id="fUrl" value="${esc(c.url)}" placeholder="https://script.google.com/macros/s/.../exec">
+   <label class="f" style="margin-top:8px">Token (zelfde als in Code.gs)</label><input class="txt" id="fTok" value="${esc(c.token)}">
+   <label class="f" style="margin-top:8px">Maandag van week 1 (leeg = automatisch)</label><input type="date" class="txt" id="fStart" value="${esc(c.startDate||'')}">
+   <div class="row" style="margin-top:12px"><button class="btn ghost" id="cM">Annuleer</button>${i>=0?'<button class="btn danger" id="delC">Verwijder</button>':''}<button class="btn" id="okM">Opslaan</button></div>`,()=>{
+    $('#cM').onclick=closeModal;
+    const del=$('#delC'); if(del) del.onclick=()=>{ S.clients.splice(i,1); S.ci=0; S.client=S.clients[0]||null; saveClients(); closeModal(); if(S.client) loadAll(); else render(); };
+    $('#okM').onclick=async()=>{ const rec={name:$('#fName').value.trim()||'Client',url:$('#fUrl').value.trim(),token:$('#fTok').value.trim(),startDate:$('#fStart').value||''};
+      if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(rec.url)) return toast('URL moet eindigen op /exec');
+      if(i>=0) S.clients[i]=rec; else { S.clients.push(rec); S.ci=S.clients.length-1; } S.client=S.clients[S.ci]; saveClients(); closeModal();
+      if(rec.startDate) api('saveMeta',{startDate:rec.startDate}).catch(()=>{}); loadAll(); };
+  });
+}
+function openModal(html,bind){ closeModal(); const m=document.createElement('div'); m.className='modal'; m.id='modal'; m.innerHTML=`<div class="box">${html}</div>`; m.onclick=e=>{ if(e.target===m) closeModal(); }; document.body.appendChild(m); if(bind) bind(); }
+function closeModal(){ const m=$('#modal'); if(m){ if(S.chart&&m.contains(S.chart.canvas)){ S.chart.destroy(); S.chart=null; } m.remove(); } }
+
+loadClients(); render(); if(S.client) loadAll();
+</script>
+</body>
+</html>
