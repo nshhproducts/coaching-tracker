@@ -1,10 +1,12 @@
 /**
  * Coaching Tracker - Google Apps Script backend
+ * Standalone script (script.google.com) in your own account; it opens the sheet by SHEET_ID.
  * Deploy as Web App: Execute as "Me", Who has access "Anyone".
  * The app talks to this script; the coaching sheet stays the single source of truth.
  */
 
 const CONFIG = {
+  SHEET_ID: '1P9cWJR0G9RlPo3cWk3I6udxeziASxLUTibesH33CV2g',   // the coaching sheet (from its URL)
   TOKEN: 'CHANGE-ME-TO-A-LONG-RANDOM-STRING',   // same value goes into the app settings
   SHEET_TRAINING: 'Training',
   SHEET_WEIGH: 'Dagelijkse weging ',             // note: trailing space in the coach's tab name
@@ -47,8 +49,15 @@ function handle(p) {
   }
 }
 function json(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-const ss = () => SpreadsheetApp.getActiveSpreadsheet();
-const sh = name => { const s = ss().getSheetByName(name); if (!s) throw new Error('Tab not found: ' + name); return s; };
+let _ss = null;
+const ss = () => _ss || (_ss = SpreadsheetApp.openById(CONFIG.SHEET_ID));
+const sh = name => {
+  let s = ss().getSheetByName(name);
+  if (!s) s = ss().getSheets().find(x => x.getName().trim().toLowerCase() === String(name).trim().toLowerCase());
+  if (!s) throw new Error('Tab not found: ' + name + ' (tabs: ' + ss().getSheets().map(x => x.getName()).join(', ') + ')');
+  return s;
+};
+const shOpt = name => { try { return sh(name); } catch (e) { return null; } };
 
 /* ------------------------------------------------------------------ READ ALL */
 const ACTIONS = {
@@ -142,7 +151,7 @@ function writeDays(p) {
 
 /** Skinfold table on the weigh tab: M = date, N..T = chest, axilla, tricep, back, abd, hip, quad, U = fat% */
 function readSkinfolds() {
-  const s = sh(CONFIG.SHEET_WEIGH);
+  const s = sh(CONFIG.SHEET_WEIGH); if (s.getLastColumn() < CONFIG.SKIN_DATE_COL) return {};
   const vals = s.getRange(CONFIG.SKIN_FIRST_ROW, CONFIG.SKIN_DATE_COL, CONFIG.SKIN_MAX_ROWS, 9).getValues();
   const keys = ['sChest', 'sAxilla', 'sTricep', 'sBack', 'sAbd', 'sHip', 'sQuad'];
   const out = {};
@@ -167,7 +176,7 @@ function writeSkinfold(p) {
 
 /** Lichaam metingen: labels "Week N:" in row 2 at C, E, G, ...; circumference rows 6-11 */
 function readMeasurements() {
-  const s = sh(CONFIG.SHEET_MEASURE);
+  const s = shOpt(CONFIG.SHEET_MEASURE); if (!s) return {};
   const lastCol = s.getLastColumn();
   const labels = s.getRange(CONFIG.MEASURE_LABEL_ROW, 1, 1, lastCol).getValues()[0];
   const block = s.getRange(1, 1, 20, lastCol).getValues();
@@ -183,7 +192,10 @@ function readMeasurements() {
 }
 /** p = {week, chest, waist, armR, armL, legR, legL, steps} -> writes to the column whose label matches week (or creates next label) */
 function writeMeasurement(p) {
-  const s = sh(CONFIG.SHEET_MEASURE);
+  let s = shOpt(CONFIG.SHEET_MEASURE);
+  if (!s) { s = ss().insertSheet(CONFIG.SHEET_MEASURE); s.getRange('B2').setValue('Meting:'); s.getRange('B4').setValue('Weekgemiddelde in KG');
+    const labels = { chest: 'Borst omtrek', waist: 'Buik omtrek navel hoogte', armR: 'Rechter arm omtrek', armL: 'Linker arm omtrek', legR: 'Rechter been omtrek', legL: 'Linker been omtrek', sleep: 'Gemiddeld uren slaap', steps: 'Gemiddeld aantal stappen per dag' };
+    Object.keys(labels).forEach(k => s.getRange(CONFIG.MEASURE_ROWS[k], 2).setValue(labels[k])); }
   const lastCol = Math.max(s.getLastColumn(), 3);
   const labels = s.getRange(CONFIG.MEASURE_LABEL_ROW, 1, 1, lastCol + 2).getValues()[0];
   let col = -1, lastLabelCol = 1;
@@ -201,8 +213,8 @@ function readCheckins() {
   return out;
 }
 function writeCheckin(p) {
-  const s = sh(CONFIG.SHEET_CHECKIN);
-  Object.keys(CONFIG.CHECKIN_CELLS).forEach(k => { if (p[k] != null) s.getRange(CONFIG.CHECKIN_CELLS[k]).setValue(p[k]); });
+  const s = shOpt(CONFIG.SHEET_CHECKIN);
+  if (s) Object.keys(CONFIG.CHECKIN_CELLS).forEach(k => { if (p[k] != null) s.getRange(CONFIG.CHECKIN_CELLS[k]).setValue(p[k]); });
   const log = appLog(); const last = log.getLastRow();
   const rows = last >= 4 ? log.getRange(4, 1, last - 3, 1).getValues() : [];
   let row = -1; rows.forEach((r, i) => { if (Number(r[0]) === Number(p.week)) row = 4 + i; });

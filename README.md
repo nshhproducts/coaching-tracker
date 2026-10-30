@@ -8,8 +8,8 @@ Mobiele web-app bovenop de Optimice coaching Google Sheet. De sheet blijft de br
 
 ## 1. Apps Script deployen (per sheet, 5 minuten)
 
-1. Open de coaching-sheet in Google Sheets met het account dat er bewerkrechten op heeft
-2. Menu **Extensies › Apps Script**
+1. Ga naar script.google.com met het account dat bewerkrechten op de sheet heeft (let op: een account met Advanced Protection werkt niet)
+2. **Nieuw project**, zet `CONFIG.SHEET_ID` op het ID uit de sheet-URL
 3. Verwijder de inhoud van `Code.gs`, plak de inhoud van `apps-script/Code.gs`
 4. Zet bovenin `CONFIG.TOKEN` op een lange willekeurige string (bijv. 32 tekens). Check `SHEET_WEIGH`: de tabnaam van je huidige weegtab (bij jou `Dagelijkse weging ` met spatie aan het eind)
 5. Klik op **Uitvoeren** met functie `selfTest` geselecteerd. Geef toestemming (eigen account, "Advanced › Go to project (unsafe)" is normaal bij eigen scripts). In het logboek zie je nu je programma als JSON. Staat er een fout "Tab not found", pas de tabnaam in CONFIG aan
