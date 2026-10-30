@@ -15,7 +15,8 @@ const CONFIG = {
   SHEET_INFO: 'Info',
   SHEET_APPLOG: 'App log',                       // created by the app for check-in history + meta
   TRAINING_HEADER_ROW: 2,
-  TRAINING_FIRST_WEEK_COL: 5,                    // column E = week 1
+  TRAINING_FIRST_WEEK_COL: 5,                    // column E = week 1 (Danny's layout: 6)
+  TRAINING_COLS: { equipment: 1, notes: 0, name: 2, sets: 3, reps: 4 },   // 1-based; 0 = not present (Danny: equipment 1, notes 2, name 3, sets 4, reps 5)
   TRAINING_MAX_WEEKS: 60,
   WEIGH_FIRST_WEEK_ROW: 6,                       // row 6 = week 1 weights, row 7 = sleep, 5 rows per week
   WEIGH_ROWS_PER_WEEK: 5,
@@ -100,15 +101,16 @@ function readProgram() {
   const vals = s.getRange(1, 1, lastRow, lastCol).getValues();
   const blocks = []; let cur = null; let letter = 0;
   for (let r = CONFIG.TRAINING_HEADER_ROW; r < lastRow; r++) {   // r is 0-based index, row number = r+1
-    const row = vals[r]; const sets = row[2]; const name = row[1];
+    const C = CONFIG.TRAINING_COLS; const row = vals[r]; const sets = row[C.sets - 1]; const name = row[C.name - 1];
     const hasSets = sets !== '' && sets !== null && !isNaN(Number(sets)) && Number(sets) > 0;
     if (!hasSets) { if (cur) { if (cur.exercises.length) blocks.push(cur); cur = null; } continue; }
     if (!cur) { cur = { id: String.fromCharCode(65 + letter), name: 'Workout ' + String.fromCharCode(65 + letter), exercises: [] }; letter++; }
     if (!name) continue;                                           // template row without an exercise
     const cells = {};
     for (let c = CONFIG.TRAINING_FIRST_WEEK_COL - 1; c < lastCol; c++) { const v = row[c]; if (v !== '' && v !== null) cells[c - CONFIG.TRAINING_FIRST_WEEK_COL + 2] = String(v); }
-    cur.exercises.push({ id: cur.id + '-r' + (r + 1), row: r + 1, name: String(name).trim(), equipment: String(row[0] || '').trim(),
-      sets: Number(sets), reps: String(row[3] || '').replace(/reps/i, '').replace(/^x\s*/i, '').trim(), cells });
+    const equipment = [C.equipment ? row[C.equipment - 1] : '', C.notes ? row[C.notes - 1] : ''].map(x => String(x || '').trim()).filter(Boolean).join(' · ');
+    cur.exercises.push({ id: cur.id + '-r' + (r + 1), row: r + 1, name: String(name).trim(), equipment,
+      sets: Number(sets), reps: String(row[C.reps - 1] || '').replace(/reps/i, '').replace(/^x\s*/i, '').trim(), cells });
   }
   if (cur && cur.exercises.length) blocks.push(cur);
   return blocks;
