@@ -122,7 +122,7 @@ async function loadAll(){
   S.loading=true; S.error=null; render();
   try{
     const d=await api('all');
-    S.meta=d.meta||{}; S.program=d.program||[]; S.days=d.days||{}; S.skin=d.skinfolds||{}; S.meas=d.measurements||{}; S.checkins=d.checkins||{};
+    S.meta=d.meta||{}; S.program=(d.program||[]).map(w=>({...w,exercises:w.exercises.map(e=>({...e,equipment:String(e.equipment||'').replace(/^[A-E](?: · |$)/,'')}))})); S.days=d.days||{}; S.skin=d.skinfolds||{}; S.meas=d.measurements||{}; S.checkins=d.checkins||{};
     if(!S.client.startDate && S.meta.startDate) S.client.startDate=S.meta.startDate;
     if(!S.client.startDate){ S.client.startDate=guessStart(); saveClients(); }
     S.cells={}; S.program.forEach(w=>w.exercises.forEach(ex=>{ Object.entries(ex.cells||{}).forEach(([wk,raw])=>{ (S.cells[w.id+'_w'+wk]=S.cells[w.id+'_w'+wk]||{})[ex.id]=parseCell(raw); }); }));
