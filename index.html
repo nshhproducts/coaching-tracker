@@ -117,9 +117,14 @@ function saveClients(){ try{ localStorage.setItem(LS,JSON.stringify(S.clients));
 async function api(action,payload){
   const c=S.client; if(!c||!c.url) throw new Error('Geen API-URL ingesteld');
   const body=JSON.stringify({token:c.token,action,...(payload||{})});
-  const res=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body,redirect:'follow'});
-  const txt=await res.text(); let j; try{ j=JSON.parse(txt); }catch(e){ throw new Error('Ongeldig antwoord van script (is het als "Anyone" gedeployed?)'); }
-  if(!j.ok) throw new Error(j.error||'API fout'); return j.data;
+  let j;
+  for(let attempt=0;attempt<3;attempt++){
+    const res=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body,redirect:'follow'});
+    const txt=await res.text(); try{ j=JSON.parse(txt); }catch(e){ throw new Error('Ongeldig antwoord van script (is het als "Anyone" gedeployed?)'); }
+    if(j.ok) return j.data;
+    if(!/lock|bezet/i.test(j.error||'') || attempt===2) throw new Error(j.error||'API fout');
+    await new Promise(r=>setTimeout(r,1500*(attempt+1)));
+  }
 }
 async function loadAll(){
   S.loading=true; S.error=null; render();

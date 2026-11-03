@@ -43,7 +43,9 @@ function handle(p) {
     const action = p.action || 'all';
     const fn = ACTIONS[action];
     if (!fn) return json({ ok: false, error: 'unknown action ' + action });
-    const lock = LockService.getScriptLock(); lock.waitLock(10000);
+    if (action === 'all') return json({ ok: true, data: fn(p) });   // reads need no lock
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(20000)) return json({ ok: false, error: 'Sheet is bezet, probeer het zo nog eens' });
     try { return json({ ok: true, data: fn(p) }); } finally { lock.releaseLock(); }
   } catch (err) {
     return json({ ok: false, error: String(err && err.message || err) });
