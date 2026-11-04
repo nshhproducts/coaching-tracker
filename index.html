@@ -172,7 +172,7 @@ function cellText(sets,note){
 }
 const setsStr=e=>{ if(!e) return ''; return cellText(e.sets||[],'')||e.note||''; };
 
-const QUOTES=["Ik ben geen homo, maar 20 euro is 20 euro"];
+const QUOTES=["Ik ben geen homo, maar 20 euro is 20 euro", "Zegt die hoer: er is een probleem, ik heb geen clitoris. Zegt die man: oh, dat maakt niet uit, doe mij dan maar een Jägermeister"];
 function dailyQuote(){ const d=new Date(); const start=new Date(d.getFullYear(),0,0); const doy=Math.floor((d-start)/864e5); return QUOTES[doy % QUOTES.length]; }
 /* ---------------- Nav + render ---------------- */
 const TABS=[
