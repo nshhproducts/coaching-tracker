@@ -172,8 +172,8 @@ function cellText(sets,note){
 }
 const setsStr=e=>{ if(!e) return ''; return cellText(e.sets||[],'')||e.note||''; };
 
-const QUOTES=["Ik ben geen homo, maar 20 euro is 20 euro", "Zegt die hoer: er is een probleem, ik heb geen clitoris. Zegt die man: oh, dat maakt niet uit, doe mij dan maar een Jägermeister"];
-function dailyQuote(){ const d=new Date(); const start=new Date(d.getFullYear(),0,0); const doy=Math.floor((d-start)/864e5); return QUOTES[doy % QUOTES.length]; }
+const QUOTES=["Zegt die hoer: er is een probleem, ik heb geen clitoris. Zegt die man: oh, dat maakt niet uit, doe mij dan maar een Jägermeister", "Liever een gat in mn broek, dan een broek in mn gat", "Ik heb liever HIV aan mn kruis, dan dat ik uit Limburg verhuis", "Ontbijt gewoon boterham pindakaas bro, zit alles op: Boter, Ham, Pinda, Kaas", "Ik ben geen homo, maar 20 euro is 20 euro"];
+function dailyQuote(){ const d=new Date(); const t=Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()); const start=Date.UTC(2026,10,4); const i=Math.floor((t-start)/864e5); return QUOTES[((i%QUOTES.length)+QUOTES.length)%QUOTES.length]; }
 /* ---------------- Nav + render ---------------- */
 const TABS=[
  ['train','Training','<svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/></svg>'],
